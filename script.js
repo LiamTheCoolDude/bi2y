@@ -1,52 +1,26 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<title>Bible in 2 Years</title>
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<style>
-:root{--bg:#faf7f2;--card:#fff;--ink:#2b2622;--mute:#7a7068;--line:#e6dfd5;--acc:#8a2f3c;--ok:#2f7d4f;--warn:#b5651d;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#1c1917;--card:#26211e;--ink:#f1ebe4;--mute:#a49a90;--line:#3a332e;--acc:#d9707f;--ok:#5cc08a;--warn:#e0a060;color-scheme:dark}}
-:root[data-theme="dark"]{--bg:#1c1917;--card:#26211e;--ink:#f1ebe4;--mute:#a49a90;--line:#3a332e;--acc:#d9707f;--ok:#5cc08a;--warn:#e0a060;color-scheme:dark}
-html{scroll-padding-top:env(safe-area-inset-top,0px)}
-*{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 Georgia,'Times New Roman',serif}
-main{max-width:560px;margin:0 auto;padding:16px 14px 80px}
-h1{font-size:22px;margin:4px 0 2px}h2{font-size:15px;margin:22px 0 8px;text-transform:uppercase;letter-spacing:.06em;color:var(--mute);font-family:system-ui,sans-serif}
-.sub{color:var(--mute);font-size:14px;margin:0 0 12px}
-.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:10px}
-nav{display:flex;gap:6px;margin:10px 0}
-nav button,.btn{font:600 14px system-ui,sans-serif;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:10px;padding:9px 12px;cursor:pointer}
-nav button{flex:1}nav button.on,.btn.pri{background:var(--acc);color:#fff;border-color:var(--acc)}
-.item{display:flex;align-items:center;gap:12px;padding:12px 0;border-top:1px solid var(--line)}
-.item:first-of-type{border-top:0}
-.item input{width:26px;height:26px;accent-color:var(--ok);flex:none}
-.item .lab{font:12px system-ui,sans-serif;color:var(--mute);text-transform:uppercase;letter-spacing:.05em}
-.item .ref{font-size:18px}
-.item a{margin-left:auto;font:600 13px system-ui,sans-serif;color:var(--acc);text-decoration:none;white-space:nowrap}
-.bar{height:8px;background:var(--line);border-radius:6px;overflow:hidden}.bar i{display:block;height:100%;background:var(--ok)}
-.row{display:flex;justify-content:space-between;align-items:center;gap:8px}
-.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;text-align:center;margin-top:10px}
-.stats b{display:block;font-size:22px}.stats span{font:12px system-ui,sans-serif;color:var(--mute)}
-.pill{font:600 12px system-ui,sans-serif;padding:3px 9px;border-radius:99px;border:1px solid var(--line)}
-.pill.ok{color:var(--ok);border-color:var(--ok)}.pill.no{color:var(--warn);border-color:var(--warn)}
-input[type=text]{font:16px system-ui,sans-serif;padding:10px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--ink);width:100%}
-.dots{display:flex;gap:4px;margin-top:8px}.dots i{flex:1;height:8px;border-radius:3px;background:var(--line)}.dots i.f{background:var(--ok)}
-.muted{color:var(--mute);font-size:14px}
-.days{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
-select{font:15px system-ui,sans-serif;padding:8px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--ink)}
-</style>
-</head>
-<body>
-<main id="app"><p class="muted">Loading…</p></main>
-<script>
+// Your web app's Firebase configuration (Replace with your own project credentials from Step 1)
+const firebaseConfig = {
+  apiKey: "AIzaSyDcVC2hG5ueXg1hkyU5aYfYkv0VYzKxfL0",
+  authDomain: "bible-in-2-years.firebaseapp.com",
+  projectId: "bible-in-2-years",
+  storageBucket: "bible-in-2-years.firebasestorage.app",
+  messagingSenderId: "854337495111",
+  appId: "1:854337495111:web:e170baf50dcb1adabf9162",
+  measurementId: "G-EQNCPL0P9F"
+};
+
+// Initialize Firebase
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+
 // Change this to point "Read" links at a different online Bible reader.
 // {ref} is replaced with the passage, e.g. "Genesis 1-2".
 const READER = "https://www.biblegateway.com/passage/?version=RSVCE&search={ref}";
 const LABELS = ["Old Testament","New Testament","Psalm"];
 const $ = s => document.querySelector(s);
 const app = $("#app");
-let db, user, me, plan, members = {}, tab = "today", offset = 0, loadTimer;
+let plan, members = {}, tab = "today", offset = 0, loadTimer;
 const S = { // state
   meId: null, canWrite: true, saving: false
 };
@@ -94,10 +68,13 @@ function dayCard(i,m,editable){
   <div><div class="lab">${LABELS[k]}</div><div class="ref">${esc(t)}</div></div>${l?`<a href="${l}" target="_blank" rel="noopener">Read ↗</a>`:""}</label>`}).join("")}</div>`;
 }
 function friendsOf(id){
-  const mine=(members[id]&&members[id].follows)||[];
-  return mine.filter(f=>members[f]&&(members[f].follows||[]).includes(id));
+  const mine = (members[id] && members[id].follows) || [];
+  return mine.filter(f => members[f] && (members[f].follows || []).includes(id));
 }
 function view(){
+  if(!plan || !Array.isArray(plan.days) || !plan.start){
+    return `<h1>Bible in 2 Years</h1><p class="sub">Loading the reading plan…</p>`;
+  }
   const mm=members[S.meId]; const t=todayIndex(), N=plan.days.length;
   if(!mm||!mm.name) return `<h1>Bible in 2 Years</h1><p class="sub">Welcome. Pick a name your friends will see.</p>
   <div class="card"><input type="text" id="nm" maxlength="30" placeholder="Your name" value="${esc(S.defName||"")}"><p></p><button class="btn pri" id="go">Start reading</button></div>`;
@@ -143,7 +120,10 @@ function view(){
   return h;
 }
 function render(){
-  if(!plan){return}
+  if(!plan || !Array.isArray(plan.days) || !plan.start){
+    app.innerHTML = "<p class='muted'>The reading plan hasn't been loaded yet.</p>";
+    return;
+  }
   const keep=document.activeElement&&document.activeElement.id;
   app.innerHTML=view();
   if(keep){const e=document.getElementById(keep);if(e)e.focus()}
@@ -158,20 +138,39 @@ app.addEventListener("click",e=>{
   else if(t.id==="rs"){const v=$("#rn").value.trim();if(v)save({name:v})}
   else if(t.type==="checkbox"){setBit(+t.dataset.i,+t.dataset.k,t.checked)}
 });
+
 async function init(){
   try{
-    const c=window.claude; if(!c){app.innerHTML="<p class='muted'>Open this page from its claude.ai link to sign in.</p>";return}
-    db=await c.use("db"); user=await c.use("user");
-    if(!db||!user){app.innerHTML="<p class='muted'>Sign in to claude.ai and open this page from its link.</p>";return}
-    const v=await user.me(); S.meId=v.id; S.defName=v.name||"";
-    if(!S.meId){app.innerHTML="<p class='muted'>This page needs a signed-in viewer.</p>";return}
-    const w=await user.can("data.write"); if(w===false){app.innerHTML="<p class='muted'>You can view this page but not save progress. Ask the owner to give you Contributor access.</p>";return}
+    let user = auth.currentUser;
+    if (!user) {
+      const cred = await auth.signInAnonymously();
+      user = cred.user;
+    }
+    S.meId = user.uid;
+
     loadTimer=setTimeout(()=>{if(!plan)app.innerHTML="<p class='muted'>Still trying to reach the data…</p>"},10000);
-    db.doc("plan/main").onSnapshot(s=>{ if(s.exists){plan=s.data();clearTimeout(loadTimer);render()} else if(!plan){app.innerHTML="<p class='muted'>The reading plan hasn't been loaded yet.</p>"} },e=>{app.innerHTML="<p class='muted'>Couldn't load the plan.</p>"});
-    db.collection("members").onSnapshot(q=>{ const o={}; q.docs.forEach(d=>o[d.id]=d.data()); members=o; if(plan)render() },e=>{S.err="Lost connection to friends' data."; render()});
-  }catch(e){console.error(e);app.innerHTML="<p class='muted'>Something went wrong loading the page.</p>"}
+    
+    db.doc("plan/main").onSnapshot(s=>{ 
+      if(s.exists){
+        plan=s.data();
+        clearTimeout(loadTimer);
+        render();
+      } else if(!plan){
+        app.innerHTML="<p class='muted'>The reading plan hasn't been loaded yet.</p>";
+      }
+    }, e=>{ app.innerHTML="<p class='muted'>Couldn't load the plan.</p>" });
+
+    db.collection("members").onSnapshot(q=>{ 
+      const o={}; 
+      q.docs.forEach(d=>o[d.id]=d.data()); 
+      members=o; 
+      if(plan)render(); 
+    }, e=>{ S.err="Lost connection to friends' data."; render(); });
+
+  }catch(e){
+    console.error(e);
+    app.innerHTML="<p class='muted'>Something went wrong loading the page.</p>";
+  }
 }
+
 init();
-</script>
-</body>
-</html>
