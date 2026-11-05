@@ -72,6 +72,8 @@ function friendsOf(id){
   return mine.filter(f => members[f] && (members[f].follows || []).includes(id));
 }
 function view(){
+  if(!S.meId) return `<h1>Bible in 2 Years</h1><p class="sub">Sign in to track your reading progress.</p>
+  <div class="card"><button class="btn pri" id="google-login">Sign in with Google</button></div>`;
   if(!plan || !Array.isArray(plan.days) || !plan.start){
     return `<h1>Bible in 2 Years</h1><p class="sub">Loading the reading plan…</p>`;
   }
@@ -134,40 +136,65 @@ app.addEventListener("click",e=>{
   else if(t.dataset.off!==undefined){offset=t.dataset.off==="0"?0:offset+ +t.dataset.off;render()}
   else if(t.dataset.add){const f=(members[S.meId].follows||[]).slice();if(!f.includes(t.dataset.add))f.push(t.dataset.add);save({follows:f})}
   else if(t.dataset.unf){save({follows:(members[S.meId].follows||[]).filter(x=>x!==t.dataset.unf)})}
+  else if(t.id==="google-login"){loginWithGoogle()}
   else if(t.id==="go"){const v=$("#nm").value.trim();if(v)save({name:v,d:"",follows:[]})}
   else if(t.id==="rs"){const v=$("#rn").value.trim();if(v)save({name:v})}
   else if(t.type==="checkbox"){setBit(+t.dataset.i,+t.dataset.k,t.checked)}
 });
 
-async function init(){
-  try{
-    let user = auth.currentUser;
-    if (!user) {
-      const cred = await auth.signInAnonymously();
-      user = cred.user;
+function loginWithGoogle(){
+  const provider = new firebase.auth.GoogleAuthProvider();
+
+  auth.signInWithPopup(provider)
+    .then(result => {
+      const user = result.user;
+      console.log("Logged in as:", user.displayName, user.uid);
+      // The auth state listener loads this user's progress from Firestore.
+    })
+    .catch(error => {
+      console.error("Login error:", error.message);
+      S.err = "Couldn't sign in with Google. Please try again.";
+      render();
+    });
+}
+
+function loadUserData(user){
+  S.meId = user.uid;
+
+  loadTimer=setTimeout(()=>{if(!plan)app.innerHTML="<p class='muted'>Still trying to reach the data…</p>"},10000);
+
+  db.doc("plan/main").onSnapshot(s=>{
+    if(s.exists){
+      plan=s.data();
+      clearTimeout(loadTimer);
+      render();
+    } else if(!plan){
+      app.innerHTML="<p class='muted'>The reading plan hasn't been loaded yet.</p>";
     }
-    S.meId = user.uid;
+  }, e=>{ app.innerHTML="<p class='muted'>Couldn't load the plan.</p>" });
 
-    loadTimer=setTimeout(()=>{if(!plan)app.innerHTML="<p class='muted'>Still trying to reach the data…</p>"},10000);
-    
-    db.doc("plan/main").onSnapshot(s=>{ 
-      if(s.exists){
-        plan=s.data();
-        clearTimeout(loadTimer);
+  db.collection("members").onSnapshot(q=>{
+    const o={};
+    q.docs.forEach(d=>o[d.id]=d.data());
+    members=o;
+    if(plan)render();
+  }, e=>{ S.err="Lost connection to friends' data."; render(); });
+}
+
+function init(){
+  try{
+    auth.onAuthStateChanged(user=>{
+      if(user){
+        loadUserData(user);
+      } else {
+        S.meId = null;
         render();
-      } else if(!plan){
-        app.innerHTML="<p class='muted'>The reading plan hasn't been loaded yet.</p>";
       }
-    }, e=>{ app.innerHTML="<p class='muted'>Couldn't load the plan.</p>" });
-
-    db.collection("members").onSnapshot(q=>{ 
-      const o={}; 
-      q.docs.forEach(d=>o[d.id]=d.data()); 
-      members=o; 
-      if(plan)render(); 
-    }, e=>{ S.err="Lost connection to friends' data."; render(); });
-
-  }catch(e){
+    }, e=>{
+      console.error(e);
+      app.innerHTML="<p class='muted'>Something went wrong loading the page.</p>";
+    });
+  } catch(e) {
     console.error(e);
     app.innerHTML="<p class='muted'>Something went wrong loading the page.</p>";
   }
